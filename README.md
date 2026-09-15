@@ -1,5 +1,5 @@
 # HTML-AI
-Sì. Ti scrivo un testo completo, ordinato e leggibile, mantenendo esattamente il concetto che abbiamo costruito attorno a REL + P6, senza allargarmi a cose che qui non servono.
+Ti scrivo un testo completo, ordinato e leggibile, mantenendo esattamente il concetto che abbiamo costruito attorno a REL + P6, senza allargarmi a cose che qui non servono.
 
 REL + P6: ricostruzione dei pesi senza conservare la matrice completa
 
