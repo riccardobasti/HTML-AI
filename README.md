@@ -1,5 +1,4 @@
-# HTML-AI
-[UNISEFE_VREL_ENUNCIATO_TOTALE.md](https://github.com/user-attachments/files/32612337/UNISEFE_VREL_ENUNCIATO_TOTALE.md)
+# HTML-AI[UNISEFE_VREL_ENUNCIATO_TOTALE_CANONICO.md](https://github.com/user-attachments/files/32612692/UNISEFE_VREL_ENUNCIATO_TOTALE_CANONICO.md)
 # UNISEFE VREL
 ## Enunciato, filosofia, percorso P6 → continuo → VREL e verifica sperimentale
 
@@ -2056,6 +2055,713 @@ Output_{UNISEFE}=Output_{REF}
 \]
 
 nel dominio realmente verificato.
+
+
+
+# 13M. VREL canonica recuperata dai test sperimentali
+
+Questa sezione fissa la forma canonica di VREL emersa nei test su immagini, video, domini generali e piccoli modelli AI.
+
+La forma operativa recuperata è:
+
+```text
+W[r,c]
+  ↓
+REL BYTE-NATIVE
+  ↓
+VREL.get(REL_BYTES)
+  ↓
+VALUE
+```
+
+La proprietà fondamentale è:
+
+\[
+\boxed{
+\text{stessa REL} \Rightarrow \text{stesso VALUE}
+}
+\]
+
+VREL non interpreta il significato semantico della domanda.
+
+Non decide cosa "pensare".
+
+Non sostituisce softmax, residui, attivazioni, normalizzazioni o logica del Transformer.
+
+Il suo compito canonico è molto più preciso:
+
+> **quando il modello richiede un valore che nel riferimento proviene da una matrice o da una struttura relazionale equivalente, VREL riceve la REL corrispondente e restituisce il VALUE associato.**
+
+---
+
+## 13M.1 REL BYTE-NATIVE
+
+La REL canonica viene serializzata in BYTE.
+
+Nella forma usata nei prototipi matrix-free:
+
+```text
+REL_BYTES = encode(kind, family, row, col, ...)
+```
+
+dove gli argomenti identificano completamente la relazione richiesta.
+
+Per una matrice:
+
+\[
+R_{r,c}=REL(kind,family,r,c)
+\]
+
+e:
+
+\[
+REL\_BYTES=B(R_{r,c})
+\]
+
+Il provider viene interrogato come:
+
+\[
+VREL.get(REL\_BYTES)
+\]
+
+e restituisce:
+
+\[
+VALUE
+\]
+
+Quindi:
+
+\[
+\boxed{
+VALUE = VREL.get(B(R))
+}
+\]
+
+---
+
+## 13M.2 Forma matriciale canonica
+
+Per una matrice di riferimento \(W\):
+
+\[
+W_{r,c}
+\]
+
+la sostituzione canonica è:
+
+\[
+\boxed{
+W_{r,c}
+\rightarrow
+REL\_BYTES(r,c)
+\rightarrow
+VREL.get(REL\_BYTES)
+\rightarrow
+VALUE
+}
+\]
+
+La condizione di equivalenza è:
+
+\[
+\boxed{
+VREL.get(REL\_BYTES(r,c))=W_{r,c}
+}
+\]
+
+Da cui:
+
+\[
+\Delta_{r,c}
+=
+VREL.get(REL\_BYTES(r,c))-W_{r,c}
+\]
+
+e il caso esatto è:
+
+\[
+\boxed{
+\Delta_{r,c}=0
+}
+\]
+
+---
+
+## 13M.3 Proprietà canoniche
+
+La VREL usata nei test era definita dai seguenti principi operativi.
+
+### A. Calcolo on-demand
+
+Il VALUE viene prodotto quando la REL viene interrogata.
+
+```text
+REL
+ ↓
+query
+ ↓
+VALUE
+```
+
+Non è necessario mantenere una matrice \(W[][]\) persistente per accedere a quel valore.
+
+### B. Nessun riordino artificiale
+
+La REL identifica direttamente il valore richiesto.
+
+Non è necessario ricostruire una nuova numerazione o un nuovo ordinamento degli elementi.
+
+### C. Nessun provider fittizio
+
+Nei test canonici non deve essere introdotto, al posto di VREL:
+
+- un hash casuale;
+- un PRNG;
+- un bias inventato;
+- una matrice nascosta;
+- una tabella di fallback;
+- una funzione pseudo-casuale usata soltanto per produrre numeri differenti.
+
+La proprietà da verificare resta:
+
+\[
+VREL(R)=REFERENCE(R)
+\]
+
+### D. Nessuna matrice persistente di fallback
+
+Il percorso sperimentale matrix-free canonico era:
+
+```text
+richiesta del valore
+      ↓
+REL BYTE-NATIVE
+      ↓
+VREL
+      ↓
+VALUE
+```
+
+non:
+
+```text
+REL
+ ↓
+lookup nascosto in W[][]
+ ↓
+VALUE
+```
+
+---
+
+## 13M.4 Universal Torture
+
+Nel test denominato **Universal Torture**, la forma di accesso era:
+
+\[
+V = VREL(REL)
+\]
+
+con la proprietà:
+
+\[
+\text{stessa REL} \rightarrow \text{stessa risposta}
+\]
+
+su 12 domini.
+
+Numero di interrogazioni effettive:
+
+```text
+3.002.604
+```
+
+Risultato riportato nel test:
+
+```text
+errori = 0
+BIT = 1
+```
+
+Questo test dimostrava la coerenza del provider sui domini verificati.
+
+Da solo non era sufficiente a dimostrare una compressione universale né l'indipendenza completa tra riferimento e provider.
+
+---
+
+## 13M.5 Independent Torture
+
+Per rendere il confronto più severo, è stato introdotto un test con due motori distinti:
+
+```text
+stessa REL
+   ├────────────→ REFERENCE → VALUE_A
+   │
+   └────────────→ VREL      → VALUE_B
+```
+
+senza una funzione di risposta condivisa tra i due motori.
+
+La verifica era:
+
+\[
+\Delta=VALUE_B-VALUE_A
+\]
+
+Nei domini discreti riportati — immagine, testo, Unicode, BYTE e vettori — il confronto risultò esatto.
+
+Nel dominio numerico floating furono osservate differenze dell'ordine dell'errore di rappresentazione floating, con:
+
+\[
+MAX|\Delta|
+\approx
+4.218847493575595\times10^{-15}
+\]
+
+La lezione metodologica è:
+
+\[
+\boxed{
+\text{equivalenza numerica floating}
+\neq
+\text{identità bit-per-bit}
+}
+\]
+
+Per questo il confronto BYTE-native è stato preferito quando era richiesta uguaglianza esatta.
+
+---
+
+## 13M.6 Test video canonico
+
+La struttura del test video era:
+
+```text
+stessa REL BYTE
+      ├────────→ REFERENCE → uint8
+      └────────→ VREL      → uint8
+```
+
+Dimensioni:
+
+```text
+160 × 90 × 4
+120 frame
+```
+
+Numero totale di interrogazioni BYTE:
+
+\[
+120\times160\times90\times4
+=
+6.912.000
+\]
+
+Risultato:
+
+```text
+differenze = 0
+MAX Δ = 0
+BIT VIDEO = 1
+```
+
+Formalmente:
+
+\[
+\forall R\in D_{video},
+\quad
+BYTE_{VREL}(R)=BYTE_{REF}(R)
+\]
+
+quindi:
+
+\[
+\boxed{
+BIT_{VIDEO}=1
+}
+\]
+
+Il test non richiedeva frame persistenti completi: i VALUE venivano richiesti on-demand attraverso la REL.
+
+---
+
+## 13M.7 Immagini
+
+Nel test RGBA:
+
+```text
+365 × 320 × 4
+```
+
+furono interrogati:
+
+```text
+467.200 valori
+```
+
+e il confronto BYTE riportò:
+
+\[
+MAX\Delta_{8bit}=0
+\]
+
+quindi:
+
+\[
+\boxed{
+BIT_{IMAGE}=1
+}
+\]
+
+Lo schema era lo stesso:
+
+```text
+REL pixel/canale
+      ├────────→ REFERENCE
+      └────────→ VREL
+                    ↓
+                stesso BYTE
+```
+
+---
+
+## 13M.8 Simple AI
+
+Nei test di AI semplice il principio non cambiava.
+
+La rete o trasformazione eseguiva normalmente la propria logica.
+
+Soltanto i VALUE che nel riferimento provenivano da pesi/matrici venivano richiesti a VREL.
+
+Schema:
+
+```text
+INPUT
+  ↓
+trasformazione
+  ↓
+serve un peso
+  ↓
+REL BYTE-NATIVE
+  ↓
+VREL.get(REL_BYTES)
+  ↓
+VALUE
+  ↓
+continua il calcolo originale
+```
+
+Il test riportato utilizzava:
+
+```text
+100.000 input
+8 output per input
+800.000 confronti
+```
+
+con:
+
+```text
+differenze = 0
+BIT = 1
+```
+
+La baseline conteneva:
+
+```text
+1.152 pesi
+```
+
+mentre il percorso sperimentale non manteneva la corrispondente matrice persistente come struttura di accesso.
+
+---
+
+## 13M.9 Transformer matrix-free
+
+Nel Transformer ridotto furono sostituite:
+
+```text
+8 / 8 matrici
+```
+
+La regola era:
+
+```text
+quando il Transformer legge W[r,c]
+        ↓
+costruisci la REL corretta
+        ↓
+VREL.get(REL_BYTES)
+        ↓
+restituisci quel VALUE
+```
+
+Tutte le altre operazioni del Transformer rimanevano quelle del riferimento.
+
+Pesi della baseline:
+
+```text
+3.328
+```
+
+Risultato riportato:
+
+```text
+differenze = 0
+BIT = 1
+```
+
+Questa è la forma corretta del principio:
+
+\[
+\boxed{
+\text{Transformer invariato}
++
+\text{VREL al posto delle sole matrici}
+}
+\]
+
+---
+
+## 13M.10 GPT matrix-free ridotto
+
+Nel test GPT ridotto:
+
+```text
+input   = 1.000
+layers  = 6
+heads   = 6
+dim     = 96
+```
+
+la variante sperimentale utilizzava:
+
+```text
+matrici persistenti = 0
+```
+
+con i parametri richiesti attraverso REL/VREL.
+
+Il confronto sul next byte riportò:
+
+```text
+next byte diversi = 0
+BIT = 1
+```
+
+quindi:
+
+\[
+\boxed{
+BYTE_{next}^{VREL}
+=
+BYTE_{next}^{REF}
+}
+\]
+
+nel dominio del test eseguito.
+
+---
+
+## 13M.11 Cosa VREL NON fa
+
+La forma canonica recuperata chiarisce anche ciò che VREL non deve fare.
+
+VREL non:
+
+- interpreta autonomamente il linguaggio;
+- sostituisce ogni funzione del modello;
+- inventa hidden;
+- inventa layer;
+- inventa cognizioni;
+- sostituisce softmax;
+- sostituisce GELU;
+- sostituisce residui;
+- sostituisce normalizzazioni;
+- crea conoscenza che non è rappresentata nella relazione/provider.
+
+VREL svolge una funzione precisa:
+
+\[
+\boxed{
+REL \rightarrow VALUE
+}
+\]
+
+---
+
+## 13M.12 Rapporto con P6
+
+P6 è stato uno dei passaggi che hanno portato alla costruzione del provider relazionale.
+
+La forma:
+
+\[
+P_6(z)
+\]
+
+mostra come una regola compatta possa produrre VALUE a partire da un parametro.
+
+REL introduce l'identità della richiesta:
+
+\[
+z=Z(REL)
+\]
+
+e quindi:
+
+\[
+VALUE=P_6(Z(REL))
+\]
+
+VREL generalizza il principio:
+
+\[
+\boxed{
+VALUE=VREL(REL)
+}
+\]
+
+Non è necessario che ogni implementazione VREL sia riducibile esclusivamente alla formula P6.
+
+Il punto ereditato da P6 è il principio:
+
+> **non interrogare una struttura per posizione soltanto; costruire una relazione deterministica che restituisca il VALUE richiesto.**
+
+---
+
+## 13M.13 Rapporto con C(REL)
+
+Nel percorso sperimentale è stata verificata anche la continuità:
+
+```text
+REL
+ ↓
+C(REL)
+ ↓
+VALUE
+```
+
+con output identico nel test eseguito.
+
+Questo passaggio ha mostrato che una rappresentazione intermedia continua può preservare la stessa risposta, purché la relazione resti equivalente.
+
+La condizione rimane:
+
+\[
+C(REL)\equiv REL
+\]
+
+rispetto al VALUE richiesto, cioè:
+
+\[
+VREL(C(REL))=VREL(REL)
+\]
+
+nel dominio in cui tale equivalenza è stata verificata.
+
+---
+
+## 13M.14 Formula canonica minima
+
+La VREL sperimentale può quindi essere enunciata nella forma minima:
+
+\[
+\boxed{
+R=B(REL(kind,family,\ldots))
+}
+\]
+
+\[
+\boxed{
+v=VREL.get(R)
+}
+\]
+
+con:
+
+\[
+\boxed{
+v=REFERENCE(R)
+}
+\]
+
+e quindi:
+
+\[
+\boxed{
+\Delta(R)=0
+}
+\]
+
+nel dominio esatto verificato.
+
+Per una matrice:
+
+\[
+\boxed{
+VREL.get(B(REL(W,r,c)))=W_{r,c}
+}
+\]
+
+---
+
+## 13M.15 Enunciato canonico
+
+> **VREL è un provider deterministico BYTE-native che riceve una REL completamente identificata e restituisce il VALUE associato. Nel caso matrix-free, la REL identifica il valore che nel modello di riferimento sarebbe stato letto da una matrice. VREL sostituisce esclusivamente quell'accesso, mentre il resto del calcolo rimane invariato. La correttezza viene verificata confrontando REFERENCE e VREL sulla stessa REL e richiedendo Δ=0 nel dominio esatto testato.**
+
+Formalmente:
+
+\[
+\boxed{
+R_{r,c}=B(REL(W,r,c))
+}
+\]
+
+\[
+\boxed{
+VREL.get(R_{r,c})=W_{r,c}
+}
+\]
+
+\[
+\boxed{
+\Delta_{r,c}=0
+}
+\]
+
+e, per un modello deterministico:
+
+\[
+\boxed{
+F_{VREL}(x)=F_{REF}(x)
+}
+\]
+
+quando tutte le sostituzioni matriciali soddisfano l'uguaglianza richiesta.
+
+---
+
+## 13M.16 Regola definitiva per le future implementazioni
+
+Ogni futura implementazione dichiarata "VREL canonica" deve rispettare questo controllo:
+
+```text
+1. costruisci la REL esatta
+2. serializzala in BYTE
+3. interroga VREL con quei BYTE
+4. ottieni VALUE
+5. confronta con REFERENCE sulla stessa REL
+6. se Δ = 0 → BIT 1
+7. se Δ ≠ 0 → BIT 0
+```
+
+Non sono ammesse scorciatoie che rendano il test circolare.
+
+Il riferimento e VREL devono poter essere confrontati come motori distinti.
+
+Questa è la forma sperimentale più forte recuperata dal percorso immagini → video → simple AI → Transformer → GPT ridotto.
 
 
 # 14. Protocollo di dimostrazione sperimentale
